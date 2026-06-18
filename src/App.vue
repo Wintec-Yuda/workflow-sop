@@ -305,13 +305,14 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { sopData, navigation } from './assets/data/workflow-sop.ts'
+import type { Section } from './types/workflow-sop.ts'
 
 const currentView = ref<'overview' | string>('overview')
 const isSidebarOpen = ref(false)
 
 const getCurrentSection = computed(() => {
   if (currentView.value === 'overview') return null
-  return sopData.sections.find(s => s.id === currentView.value)
+  return sopData.sections.find(s => s.id === currentView.value) as Section | null
 })
 
 const allPrinciples = computed(() => {

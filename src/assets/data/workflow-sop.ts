@@ -1,3 +1,4 @@
+import type { Section } from '../../types/workflow-sop.ts';
 import apiContract from './api-contract.ts';
 import deliverFeature from './deliver-feature.ts';
 import developmentFrontend from './development-frontend.ts';
@@ -36,7 +37,7 @@ export const sopData = {
     developmentFrontend,
     review,
     testing
-  ]
+  ] as Section[],
 };
 
 export const navigation = [
