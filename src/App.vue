@@ -1,417 +1,298 @@
 <template>
-  <div class="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors">
-    <!-- Top Navigation -->
-    <nav class="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 sticky top-0 z-50">
-      <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+  <div class="min-h-screen bg-zinc-950 text-zinc-100 flex">
+    <!-- Mobile Top Bar -->
+    <div
+      class="lg:hidden fixed top-0 left-0 right-0 z-50 bg-zinc-900 border-b border-zinc-800 px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-emerald-500 rounded-xl flex items-center justify-center text-xl">🔄</div>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight">SOP Flow</h1>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="px-3 py-1.5 bg-zinc-800 rounded-2xl text-xs flex items-center gap-2">
+          <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+          <span class="text-emerald-400">Live</span>
+        </div>
+        <button @click="toggleSidebar" class="w-10 h-10 flex items-center justify-center text-2xl">
+          ☰
+        </button>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div :class="[
+      'w-72 bg-zinc-900 border-r border-zinc-800 flex flex-col fixed top-0 bottom-0 left-0 z-50 transition-transform duration-300 lg:translate-x-0',
+      isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+    ]">
+      <!-- Logo/Header -->
+      <div class="p-6 border-b border-zinc-800 lg:pt-8">
         <div class="flex items-center gap-3">
-          <div class="w-8 h-8 bg-violet-600 rounded-xl flex items-center justify-center text-white font-bold text-xl">S
-          </div>
+          <div class="w-9 h-9 bg-emerald-500 rounded-xl flex items-center justify-center text-2xl">🔄</div>
           <div>
-            <div class="font-semibold text-xl tracking-tight">{{ sopData.title }}</div>
-            <div class="text-sm text-zinc-500 dark:text-zinc-400">{{ sopData.subtitle }}</div>
+            <h1 class="text-2xl font-bold tracking-tight">SOP Flow</h1>
+            <p class="text-xs text-zinc-500">Engineering Workflow</p>
           </div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="flex-1 overflow-y-auto py-6">
+        <nav class="px-3 space-y-1">
+          <button v-for="item in navigation" :key="item.id" @click="navigateTo(item.id)" :class="[
+            'w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-left transition-all hover:bg-zinc-800',
+            currentView === item.id
+              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+              : 'text-zinc-400 hover:text-zinc-200'
+          ]">
+            <span class="text-xl">{{ item.icon }}</span>
+            <span class="font-medium">{{ item.label }}</span>
+          </button>
+        </nav>
+
+        <!-- Quick Stats -->
+        <div class="mt-10 px-6">
+          <div class="bg-zinc-800/50 rounded-3xl p-5 border border-zinc-700">
+            <div class="text-xs uppercase tracking-widest text-zinc-500 mb-3">Process Stages</div>
+            <div class="space-y-4">
+              <div v-for="(step, i) in sopData.sections" :key="i" class="flex items-center gap-3">
+                <div
+                  class="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center text-xs font-mono text-emerald-400">
+                  {{ i + 1 }}
+                </div>
+                <div class="text-sm text-zinc-400 truncate">{{ step.title }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="p-6 border-t border-zinc-800 text-xs text-zinc-500">
+        <div class="flex items-center justify-between">
+          <div>Built for clarity</div>
+          <div class="flex gap-2">
+            <span class="px-2 py-1 bg-zinc-800 rounded-lg">v1.0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overlay for mobile -->
+    <div v-if="isSidebarOpen" @click="toggleSidebar" class="lg:hidden fixed inset-0 bg-black/70 z-40"></div>
+
+    <!-- Main Content -->
+    <div class="flex-1 lg:ml-72 min-h-screen flex flex-col">
+      <!-- Desktop Top Bar -->
+      <div
+        class="hidden lg:flex sticky top-0 z-50 bg-zinc-900/80 backdrop-blur-lg border-b border-zinc-800 px-8 py-5 items-center justify-between">
+        <div class="flex items-center gap-4">
+          <h2 class="text-3xl font-semibold tracking-tight" v-if="currentView === 'overview'">Engineering Workflow</h2>
+          <h2 class="text-3xl font-semibold tracking-tight" v-else>{{ getCurrentSection?.title }}</h2>
+          <span class="text-4xl">{{ getCurrentSection?.icon || '📋' }}</span>
         </div>
 
         <div class="flex items-center gap-4">
-          <div class="text-xs px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-2xl text-zinc-500 dark:text-zinc-400">
-            Internal Engineering
+          <div class="px-4 py-2 bg-zinc-800 rounded-2xl text-sm flex items-center gap-2">
+            <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+            <span class="text-emerald-400 font-medium">Live SOP</span>
           </div>
-        </div>
-      </div>
-    </nav>
-
-    <div class="flex max-w-7xl mx-auto">
-      <!-- Sidebar -->
-      <div
-        class="w-72 border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 min-h-[calc(100vh-73px)] p-6 hidden lg:block">
-        <div class="mb-8">
-          <div class="uppercase text-xs font-semibold tracking-widest text-zinc-400 mb-3">NAVIGATION</div>
-          <div class="space-y-1">
-            <button v-for="nav in navigation" :key="nav.id" @click="activeSection = nav.id" :class="[
-              'w-full text-left px-4 py-3 rounded-3xl flex items-center gap-3 text-sm transition-all',
-              activeSection === nav.id
-                ? 'bg-violet-100 dark:bg-violet-950 text-violet-700 dark:text-violet-300 font-medium'
-                : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'
-            ]">
-              <span class="text-lg">{{ nav.icon }}</span>
-              <span>{{ nav.label }}</span>
-            </button>
-          </div>
-        </div>
-
-        <div class="mt-12">
-          <div class="uppercase text-xs font-semibold tracking-widest text-zinc-400 mb-3">QUICK LINKS</div>
-          <a href="#definition-of-done" class="block text-sm text-violet-600 dark:text-violet-400 hover:underline py-1">
-            Definition of Done
-          </a>
-        </div>
-      </div>
-
-      <!-- Mobile Menu -->
-      <div
-        class="lg:hidden fixed bottom-4 left-4 right-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-3xl shadow-2xl p-2 z-50">
-        <div class="flex overflow-x-auto gap-1 pb-1 hide-scrollbar">
-          <button v-for="nav in navigation" :key="nav.id" @click="activeSection = nav.id"
-            class="flex-shrink-0 px-5 py-3 text-xs font-medium rounded-2xl whitespace-nowrap transition-all"
-            :class="activeSection === nav.id ? 'bg-violet-600 text-white' : 'bg-zinc-100 dark:bg-zinc-800'">
-            {{ nav.label }}
+          <button @click="currentView = 'overview'"
+            class="px-5 py-2.5 bg-white text-zinc-900 hover:bg-zinc-100 rounded-2xl font-semibold text-sm transition flex items-center gap-2">
+            ← Overview
           </button>
         </div>
       </div>
 
-      <!-- Main Content -->
-      <div class="flex-1 min-w-0 p-6 lg:p-10 pb-24 lg:pb-10">
-        <!-- Overview -->
-        <div v-if="activeSection === 'overview'" class="max-w-3xl">
-          <div class="mb-12">
-            <div
-              class="inline-flex items-center gap-2 px-4 py-2 bg-violet-100 dark:bg-violet-950 text-violet-700 dark:text-violet-300 rounded-3xl text-sm font-medium mb-6">
-              <span>🚀</span>
-              Process Flow
+      <!-- Main Scroll Area -->
+      <div class="flex-1 overflow-y-auto pt-16 lg:pt-6 p-4 md:p-6 lg:p-8">
+        <!-- Overview View -->
+        <div v-if="currentView === 'overview'" class="max-w-7xl mx-auto">
+          <!-- Hero -->
+          <div class="mb-12 text-center lg:text-left">
+            <div class="inline-flex items-center gap-2 px-4 py-2 bg-zinc-800 rounded-full text-sm mb-4">
+              <span class="text-emerald-400">●</span>
+              STANDARD OPERATING PROCEDURE
             </div>
-            <h1 class="text-5xl font-semibold tracking-tighter mb-6 leading-none">
-              Engineering<br>Workflow SOP
+            <h1 class="text-5xl md:text-6xl font-bold tracking-tighter leading-none mb-4">
+              From Idea to Production
             </h1>
-            <p class="text-xl text-zinc-600 dark:text-zinc-400 max-w-md">
-              Panduan lengkap untuk memastikan kualitas, konsistensi, dan kecepatan pengembangan fitur.
+            <p class="text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto lg:mx-0">
+              A clear, repeatable process that empowers teams to deliver high-quality features faster with fewer
+              misunderstandings.
             </p>
           </div>
 
-          <!-- Process Flow Diagram -->
-          <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-8 mb-16">
-            <div class="flex flex-col md:flex-row items-center gap-4 justify-center text-sm">
-              <div class="flex-1 text-center p-4 border border-violet-200 dark:border-violet-900 rounded-2xl">
-                <div class="text-2xl mb-2">📋</div>
-                <div class="font-medium">Deliver Feature</div>
-                <div class="text-xs text-zinc-500">Product</div>
+          <!-- Flow Diagram -->
+          <div class="mb-16">
+            <div class="relative">
+              <div
+                class="hidden md:block absolute left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-emerald-500/20 via-emerald-500 to-emerald-500/20">
               </div>
-              <div class="text-3xl text-zinc-300 dark:text-zinc-700">→</div>
-              <div class="flex-1 text-center p-4 border border-amber-200 dark:border-amber-900 rounded-2xl">
-                <div class="text-2xl mb-2">🔗</div>
-                <div class="font-medium">API Contract</div>
-                <div class="text-xs text-zinc-500">Lead</div>
-              </div>
-              <div class="text-3xl text-zinc-300 dark:text-zinc-700">→</div>
-              <div class="flex-1 text-center p-4 border border-emerald-200 dark:border-emerald-900 rounded-2xl">
-                <div class="text-2xl mb-2">💻</div>
-                <div class="font-medium">Development</div>
-                <div class="text-xs text-zinc-500">Frontend</div>
-              </div>
-              <div class="text-3xl text-zinc-300 dark:text-zinc-700">→</div>
-              <div class="flex-1 text-center p-4 border border-sky-200 dark:border-sky-900 rounded-2xl">
-                <div class="text-2xl mb-2">🔍</div>
-                <div class="font-medium">Review</div>
-                <div class="text-xs text-zinc-500">Lead</div>
-              </div>
-              <div class="text-3xl text-zinc-300 dark:text-zinc-700">→</div>
-              <div class="flex-1 text-center p-4 border border-rose-200 dark:border-rose-900 rounded-2xl">
-                <div class="text-2xl mb-2">🧪</div>
-                <div class="font-medium">Testing</div>
-                <div class="text-xs text-zinc-500">QA</div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 relative">
+                <div v-for="(section, index) in sopData.sections" :key="index"
+                  class="bg-zinc-900 border border-zinc-700 hover:border-emerald-500/50 rounded-3xl p-6 transition-all group">
+                  <div class="flex justify-between items-start mb-6">
+                    <div class="text-4xl transition-transform group-hover:scale-110">{{ section.icon }}</div>
+                    <div class="text-right">
+                      <div class="text-xs font-mono text-emerald-400">STEP {{ index + 1 }}</div>
+                      <div class="text-xs text-zinc-500 mt-1">{{ section.owner }}</div>
+                    </div>
+                  </div>
+
+                  <h3 class="font-semibold text-xl mb-3">{{ section.title }}</h3>
+                  <p class="text-zinc-400 text-sm line-clamp-4">{{ section.purpose }}</p>
+
+                  <button @click="goToSection(section.id)"
+                    class="mt-6 text-xs uppercase tracking-widest px-4 py-2.5 border border-zinc-700 hover:bg-emerald-500 hover:text-black hover:border-emerald-500 rounded-2xl transition-all w-full">
+                    View Details →
+                  </button>
+                </div>
               </div>
             </div>
           </div>
 
-          <div class="prose dark:prose-invert max-w-none">
-            <h2 class="text-3xl font-semibold mb-6">Prinsip Utama</h2>
-            <div class="grid md:grid-cols-3 gap-6">
-              <div class="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800">
-                <div class="text-4xl mb-4">📜</div>
-                <div class="font-semibold mb-2">Contract is the Source of Truth</div>
-                <div class="text-sm text-zinc-600 dark:text-zinc-400">API Contract menjadi acuan utama seluruh tim.
-                </div>
+          <!-- Principles -->
+          <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 md:p-8 mb-12">
+            <h3 class="uppercase text-xs tracking-widest text-zinc-500 mb-6">Core Principles Across All Stages</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              <div v-for="(principle, i) in allPrinciples" :key="i"
+                class="bg-zinc-800/70 p-5 rounded-2xl text-sm border border-transparent hover:border-emerald-500/30 transition">
+                {{ principle }}
               </div>
-              <div class="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800">
-                <div class="text-4xl mb-4">🔄</div>
-                <div class="font-semibold mb-2">Trust The Contract</div>
-                <div class="text-sm text-zinc-600 dark:text-zinc-400">Kurangi defensive code dan mapping berlebihan.
-                </div>
-              </div>
-              <div class="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800">
-                <div class="text-4xl mb-4">🧩</div>
-                <div class="font-semibold mb-2">Clean &amp; Maintainable</div>
-                <div class="text-sm text-zinc-600 dark:text-zinc-400">Fokus pada simplicity dan reusability.</div>
-              </div>
+            </div>
+          </div>
+
+          <!-- Quick Highlights -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div v-for="(item, i) in sopData.quickHighlights" :key="i" :class="[
+              'bg-gradient-to-br rounded-3xl p-8 border transition-all',
+              `from-${item.color}-500/10 to-transparent border-${item.color}-500/20`
+            ]">
+              <div :class="`text-${item.color}-400 mb-2 text-3xl`">{{ item.icon }}</div>
+              <div class="font-semibold text-lg">{{ item.title }}</div>
+              <div class="text-sm text-zinc-400 mt-1">{{ item.description }}</div>
             </div>
           </div>
         </div>
 
-        <!-- Section Content -->
-        <div v-else class="max-w-3xl">
-          <div v-for="section in filteredSections" :key="section.id">
-            <div class="flex items-center gap-4 mb-8">
-              <div class="text-5xl">{{ section.icon }}</div>
-              <div>
-                <div class="text-sm uppercase tracking-widest text-zinc-400">SECTION {{ sections.indexOf(section) + 1 }}
-                </div>
-                <h1 class="text-4xl font-semibold tracking-tight">{{ section.title }}</h1>
-              </div>
+        <!-- Section Detail View -->
+        <div v-else class="max-w-5xl mx-auto space-y-12">
+          <div v-if="getCurrentSection" class="space-y-12">
+            <!-- Purpose -->
+            <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-6 md:p-8">
+              <div class="uppercase text-xs tracking-widest text-emerald-400 mb-2">PURPOSE</div>
+              <p class="text-2xl leading-tight text-zinc-100">{{ getCurrentSection.purpose }}</p>
             </div>
 
-            <div class="mb-10 p-6 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-100 dark:border-zinc-800">
-              <div class="flex items-center gap-3 mb-4">
-                <div
-                  class="px-3 py-1 bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-2xl">
-                  OWNER</div>
-                <div class="text-zinc-600 dark:text-zinc-400">{{ section.owner }}</div>
+            <!-- Workflow Steps -->
+            <div>
+              <div class="flex items-center gap-3 mb-6">
+                <span class="text-3xl">📍</span>
+                <h3 class="text-2xl font-semibold">Workflow Steps</h3>
               </div>
-              <p class="text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed">{{ section.purpose }}</p>
-            </div>
 
-            <!-- Deliver Feature specific -->
-            <div v-if="section.id === 'deliver-feature'">
-              <!-- Design Checklist -->
-              <div class="mb-12">
-                <h3 class="text-xl font-semibold mb-6 flex items-center gap-2">
-                  <span>🎨</span> Design Checklist
-                </h3>
-                <div class="space-y-8">
-                  <div v-for="(check, i) in section.designChecklist" :key="i"
-                    class="bg-white dark:bg-zinc-900 p-7 rounded-3xl border border-zinc-100 dark:border-zinc-800">
-                    <div class="font-medium text-lg mb-5">{{ check.title }}</div>
-                    <ul class="space-y-3">
-                      <li v-for="(item, idx) in check.items" :key="idx" class="flex gap-3">
-                        <span class="text-emerald-500 mt-0.5">✓</span>
-                        <span class="text-zinc-600 dark:text-zinc-400">{{ item }}</span>
-                      </li>
-                    </ul>
+              <div class="space-y-4">
+                <div v-for="(step, idx) in getCurrentSection.workflowSteps" :key="idx"
+                  class="bg-zinc-900 border border-zinc-800 hover:border-zinc-600 transition rounded-3xl p-6 flex flex-col md:flex-row gap-6">
+                  <div
+                    class="w-12 h-12 bg-zinc-800 text-emerald-400 rounded-2xl flex-shrink-0 flex items-center justify-center font-mono text-xl font-bold mx-auto md:mx-0">
+                    {{ step.step }}
                   </div>
-                </div>
-              </div>
-
-              <!-- Requirement Checklist -->
-              <div class="mb-12">
-                <h3 class="text-xl font-semibold mb-6 flex items-center gap-2">
-                  <span>📋</span> Requirement Checklist
-                </h3>
-                <div class="space-y-8">
-                  <div v-for="(check, i) in section.requirementChecklist" :key="i"
-                    class="bg-white dark:bg-zinc-900 p-7 rounded-3xl border border-zinc-100 dark:border-zinc-800">
-                    <div class="font-medium text-lg mb-5">{{ check.title }}</div>
-                    <ul class="space-y-3">
-                      <li v-for="(item, idx) in check.items" :key="idx" class="flex gap-3">
-                        <span class="text-emerald-500 mt-0.5">✓</span>
-                        <span class="text-zinc-600 dark:text-zinc-400">{{ item }}</span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <!-- DoD -->
-              <div id="definition-of-done"
-                class="bg-gradient-to-br from-violet-50 to-fuchsia-50 dark:from-violet-950 dark:to-fuchsia-950 p-8 rounded-3xl border border-violet-100 dark:border-violet-900">
-                <div class="uppercase text-xs tracking-widest font-semibold mb-4 text-violet-600 dark:text-violet-400">
-                  DEFINITION OF DONE</div>
-                <h3 class="text-2xl font-semibold mb-6">Deliver Feature selesai jika...</h3>
-                <div class="grid grid-cols-1 gap-3">
-                  <div v-for="(item, i) in section.definitionOfDone" :key="i"
-                    class="flex gap-4 items-start bg-white/70 dark:bg-zinc-900/70 p-4 rounded-2xl">
-                    <div
-                      class="w-6 h-6 rounded-xl bg-white dark:bg-zinc-800 flex-shrink-0 flex items-center justify-center text-emerald-500">
-                      ✓</div>
-                    <div>{{ item }}</div>
+                  <div class="flex-1 text-center md:text-left">
+                    <div class="font-semibold text-xl mb-1">{{ step.title }}</div>
+                    <p class="text-zinc-400">{{ step.description }}</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- API Contract specific -->
-            <div v-else-if="section.id === 'api-contract'">
-              <div class="mb-12">
-                <h3 class="text-xl font-semibold mb-6">Workflow</h3>
-                <div class="bg-white dark:bg-zinc-900 p-8 rounded-3xl border">
-                  <div v-for="(step, i) in section.workflow" :key="i" class="text-lg text-zinc-600 dark:text-zinc-400">
-                    {{ step }}</div>
-                </div>
+            <!-- Principles -->
+            <div v-if="getCurrentSection.principles?.length">
+              <div class="flex items-center gap-3 mb-6">
+                <span class="text-3xl">🧭</span>
+                <h3 class="text-2xl font-semibold">Principles</h3>
               </div>
-
-              <div class="mb-12">
-                <h3 class="text-xl font-semibold mb-6 flex items-center gap-3">
-                  <span>📜</span> Rules
-                </h3>
-                <div class="space-y-4">
-                  <div v-for="(rule, i) in section.rules" :key="i"
-                    class="flex gap-4 p-6 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-100 dark:border-zinc-800">
-                    <div class="text-2xl text-amber-400">•</div>
-                    <div class="text-zinc-600 dark:text-zinc-400">{{ rule }}</div>
-                  </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div v-for="(principle, i) in getCurrentSection.principles" :key="i"
+                  class="bg-zinc-900 border border-zinc-700 px-6 py-5 rounded-3xl text-lg">
+                  {{ principle }}
                 </div>
-              </div>
-
-              <div
-                class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950 dark:to-orange-950 p-8 rounded-3xl">
-                <div class="uppercase text-xs tracking-widest text-amber-600 dark:text-amber-400 mb-3">PRINCIPAL RULE
-                </div>
-                <div class="text-3xl font-semibold leading-tight">Contract is the Source of Truth</div>
               </div>
             </div>
 
-            <!-- Development specific -->
-            <div v-else-if="section.id === 'development'">
-
-              <!-- Workflow -->
-              <div class="mb-12">
-                <h3 class="text-xl font-semibold mb-6">Workflow Steps</h3>
-
-                <div class="space-y-6">
-                  <div v-for="(step, i) in section.workflowSteps" :key="i"
-                    class="flex gap-6 bg-white dark:bg-zinc-900 p-7 rounded-3xl border">
-                    <div
-                      class="w-10 h-10 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center font-mono font-bold text-lg text-zinc-400">
-                      {{ step.step }}
-                    </div>
-
-                    <div class="flex-1">
-                      <div class="font-semibold text-lg">
-                        {{ step.title }}
-                      </div>
-
-                      <div class="text-zinc-500">
-                        {{ step.description }}
-                      </div>
-
-                      <div v-if="step.note"
-                        class="mt-4 inline-flex items-start gap-2 px-4 py-3 rounded-2xl bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900">
-                        <span>💡</span>
-                        <span>{{ step.note }}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+            <!-- Standards -->
+            <div v-if="getCurrentSection.standards">
+              <div class="flex items-center gap-3 mb-6">
+                <span class="text-3xl">📏</span>
+                <h3 class="text-2xl font-semibold">Standards</h3>
               </div>
-
-              <!-- Principles -->
-              <div class="mb-12">
-                <h3 class="text-xl font-semibold mb-6">Core Principles</h3>
-
-                <div class="grid md:grid-cols-3 gap-6">
-                  <div v-for="(principle, i) in section.principles" :key="i"
-                    class="bg-white dark:bg-zinc-900 p-6 rounded-3xl border">
-                    <div class="h-2 w-12 bg-violet-500 rounded mb-6"></div>
-                    <div class="font-semibold">
-                      {{ principle }}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Rules -->
-              <div class="mb-12">
-                <h3 class="text-xl font-semibold mb-6">Development Rules</h3>
-
-                <div class="bg-white dark:bg-zinc-900 rounded-3xl border p-8">
-                  <ul class="space-y-4">
-                    <li v-for="(rule, i) in section.rules" :key="i" class="flex items-start gap-3">
-                      <span
-                        class="w-6 h-6 rounded-xl bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">
-                        !
-                      </span>
-
-                      <span>
-                        {{ rule }}
-                      </span>
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div v-for="(category, key) in getCurrentSection.standards" :key="key" class="space-y-4">
+                  <div class="uppercase text-xs font-mono tracking-widest text-zinc-500">{{ formatKey(key) }}</div>
+                  <ul class="space-y-3">
+                    <li v-for="(item, i) in category" :key="i"
+                      class="pl-5 border-l-2 border-emerald-500/40 text-zinc-300">
+                      {{ item }}
                     </li>
                   </ul>
                 </div>
               </div>
+            </div>
 
-              <!-- Naming Convention -->
-              <div v-if="section.namingConvention" class="mb-12">
-                <h3 class="text-xl font-semibold mb-6">
-                  Naming Convention
-                </h3>
-
-                <div class="grid lg:grid-cols-2 gap-6">
-
-                  <!-- Views -->
-                  <div class="bg-white dark:bg-zinc-900 rounded-3xl border p-8">
-                    <div class="flex items-center gap-3 mb-6">
-                      <span class="text-2xl">📄</span>
-                      <h4 class="font-semibold text-lg">
-                        Views
-                      </h4>
-                    </div>
-
-                    <div class="space-y-3">
-                      <div v-for="(view, i) in section.namingConvention.views" :key="i"
-                        class="font-mono text-sm bg-zinc-100 dark:bg-zinc-800 px-4 py-3 rounded-xl">
-                        {{ view }}
-                      </div>
-                    </div>
+            <!-- Checklists -->
+            <div v-if="getCurrentSection.checklists">
+              <div class="flex items-center gap-3 mb-6">
+                <span class="text-3xl">✅</span>
+                <h3 class="text-2xl font-semibold">Checklists</h3>
+              </div>
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div v-for="(items, key) in getCurrentSection.checklists" :key="key"
+                  class="bg-zinc-900 border border-zinc-800 rounded-3xl p-7">
+                  <div class="font-medium uppercase tracking-widest text-xs text-zinc-400 mb-5">{{ formatKey(key) }}
                   </div>
-
-                  <!-- Components -->
-                  <div class="bg-white dark:bg-zinc-900 rounded-3xl border p-8">
-                    <div class="flex items-center gap-3 mb-6">
-                      <span class="text-2xl">🧩</span>
-                      <h4 class="font-semibold text-lg">
-                        Components
-                      </h4>
-                    </div>
-
-                    <div class="space-y-3">
-                      <div v-for="(component, i) in section.namingConvention.components" :key="i"
-                        class="font-mono text-sm bg-zinc-100 dark:bg-zinc-800 px-4 py-3 rounded-xl">
-                        {{ component }}
-                      </div>
-                    </div>
-                  </div>
-
+                  <ul class="space-y-3">
+                    <li v-for="(item, i) in items" :key="i" class="flex items-start gap-3">
+                      <span class="text-emerald-400 mt-0.5">✓</span>
+                      <span class="text-zinc-300">{{ item }}</span>
+                    </li>
+                  </ul>
                 </div>
               </div>
+            </div>
 
-              <!-- Definition of Done -->
-              <div id="definition-of-done"
-                class="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950 dark:to-teal-950 p-8 rounded-3xl border border-emerald-100 dark:border-emerald-900">
-                <h3 class="text-2xl font-semibold mb-8">
-                  Definition of Done
-                </h3>
+            <!-- Definition of Done -->
+            <div class="bg-emerald-500/5 border border-emerald-500/30 rounded-3xl p-6 md:p-8">
+              <div class="flex items-center gap-4 mb-6">
+                <div class="px-5 py-2 bg-emerald-500 text-black font-semibold rounded-2xl">DoD</div>
+                <h3 class="text-2xl font-semibold">Definition of Done</h3>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div v-for="(item, i) in getCurrentSection.definitionOfDone" :key="i"
+                  class="flex gap-3 items-center bg-zinc-900 px-6 py-4 rounded-2xl border border-emerald-500/10">
+                  <div
+                    class="w-5 h-5 rounded-lg border border-emerald-500 flex items-center justify-center text-xs text-emerald-400">
+                    ✓
+                  </div>
+                  <span>{{ item }}</span>
+                </div>
+              </div>
+            </div>
 
-                <ul class="space-y-4">
-                  <li v-for="(item, i) in section.definitionOfDone" :key="i" class="flex items-start gap-3">
-                    <span
-                      class="inline-block w-5 h-5 bg-emerald-500 text-white text-xs rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                      ✓
-                    </span>
-
-                    <span>
-                      {{ item }}
-                    </span>
-                  </li>
+            <!-- Severity Rules -->
+            <div v-if="getCurrentSection.severityRules" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div v-for="(rules, level) in getCurrentSection.severityRules" :key="level"
+                class="bg-zinc-900 border border-zinc-700 rounded-3xl p-7">
+                <div class="uppercase text-xs font-mono mb-4 flex items-center gap-2">
+                  <span :class="level === 'critical' || level === 'major' ? 'text-red-400' : 'text-amber-400'">
+                    {{ level.toUpperCase() }}
+                  </span>
+                </div>
+                <ul class="space-y-3">
+                  <li v-for="(rule, i) in rules" :key="i" class="text-zinc-300">• {{ rule }}</li>
                 </ul>
-              </div>
-
-            </div>
-
-            <!-- Review -->
-            <div v-else-if="section.id === 'review'">
-              <div class="mb-12">
-                <h3 class="text-xl font-semibold mb-6">Review Checklist</h3>
-                <div class="grid gap-4">
-                  <div v-for="(item, i) in section.checklist" :key="i"
-                    class="p-6 bg-white dark:bg-zinc-900 rounded-3xl flex gap-4 items-center border">
-                    <div class="text-emerald-500">✓</div>
-                    <div class="font-medium">{{ item }}</div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="text-zinc-500 italic border-l-4 border-zinc-200 dark:border-zinc-700 pl-6 py-1">
-                Review sistem, bukan selera pribadi.
-              </div>
-            </div>
-
-            <!-- Testing -->
-            <div v-else-if="section.id === 'testing'">
-              <div class="mb-12">
-                <h3 class="text-xl font-semibold mb-6">Testing Checklist</h3>
-                <div class="space-y-6">
-                  <div v-for="(item, i) in section.checklist" :key="i"
-                    class="p-7 bg-white dark:bg-zinc-900 rounded-3xl border">
-                    {{ item }}
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -421,44 +302,84 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue'
-import { sopData, navigation } from './data.ts'
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import { sopData, navigation } from './assets/data/workflow-sop.ts'
 
-const activeSection = ref('overview')
-const isDark = ref(false)
+const currentView = ref<'overview' | string>('overview')
+const isSidebarOpen = ref(false)
 
-const filteredSections = computed(() => {
-  return sopData.sections.filter(s => s.id === activeSection.value)
+const getCurrentSection = computed(() => {
+  if (currentView.value === 'overview') return null
+  return sopData.sections.find(s => s.id === currentView.value)
 })
 
-const sections = computed(() => sopData.sections)
+const allPrinciples = computed(() => {
+  const principles = new Set<string>()
+  sopData.sections.forEach(section => {
+    if (section.principles) {
+      section.principles.forEach(p => principles.add(p))
+    }
+  })
+  return Array.from(principles).slice(0, 9)
+})
 
-function toggleDarkMode() {
-  isDark.value = !isDark.value
-  if (isDark.value) {
-    document.documentElement.classList.add('dark')
-  } else {
-    document.documentElement.classList.remove('dark')
-  }
+function navigateTo(id: string) {
+  currentView.value = id
+  isSidebarOpen.value = false
 }
 
-// Initialize dark mode based on system preference
-onMounted(() => {
-  if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-    document.documentElement.classList.add('dark')
-    isDark.value = true
-  }
-})
+function goToSection(id: string) {
+  currentView.value = id
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function toggleSidebar() {
+  isSidebarOpen.value = !isSidebarOpen.value
+}
+
+function formatKey(key: string): string {
+  return key
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^./, str => str.toUpperCase())
+    .trim()
+}
+
+// Close sidebar when pressing ESC
+if (typeof window !== 'undefined') {
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isSidebarOpen.value) {
+      isSidebarOpen.value = false
+    }
+  })
+}
 </script>
 
 <style>
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap');
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
 }
 
-.prose h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
+h1,
+h2,
+h3 {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+/* Improve line-clamp */
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-4 {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 </style>
